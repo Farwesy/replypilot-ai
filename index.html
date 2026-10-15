@@ -332,9 +332,53 @@ function renderNextActions(){
     : '<div class="empty">No open follow-ups right now.</div>';
 }
 {const root=document.getElementById('followup-list');const items=leads.filter(l=>!['Won','Lost'].includes(l.status)).sort((a,b)=>(a.followup||'9999').localeCompare(b.followup||'9999'));root.innerHTML=items.length?items.map(l=>`<div class="follow-item"><div class="follow-dot ${l.status==='New'?'blue':''}"></div><div><strong>${esc(l.name)} — ${esc(l.status)}</strong><span>${esc(l.service)} · ${esc(l.followup||'No follow-up date')} · ${money(l.value)}</span><div class="sub">${esc(l.notes||'No notes')}</div></div><button class="outline" data-open="${esc(l.id)}">Open</button></div>`).join(''):'<div class="empty">No open leads.</div>'}
-function renderReplySelect(){const sel=document.getElementById('reply-lead');const previous=sel.value;sel.innerHTML='<option value="">Choose a lead (optional)</option>'+leads.map(l=>`<option value="${esc(l.id)}">${esc(l.name)} — ${esc(l.service)}</option>`).join('');sel.value=leads.some(l=>l.id===previous)?previous:(selectedId||'');if(sel.value){const l=leads.find(x=>x.id===sel.value);if(l){document.getElementById('inquiry').value=l.message||'';document.getElementById('reply-output').value=l.draft||''}}}
-function renderAll(){renderStats();renderRows('lead-rows',document.getElementById('search').value,document.getElementById('filter-status').value);renderRows('all-rows',document.getElementById('search-all').value,document.getElementById('filter-all').value,true);renderDetail();renderNextActions();renderFollowups();renderReplySelect()}
-function openLeadModal(l=null){const isEdit=!!l;document.getElementById('modal-root').innerHTML=`<div class="modal-backdrop" id="modal-backdrop"><section class="modal"><h2>${isEdit?'Edit lead':'Add a lead'}</h2><p>Keep contact information and the next step up to date.</p><form id="lead-form"><div class="modal-grid"><div><label class="label">Full name *</label><input class="field" name="name" required value="${esc(l?.name||'')}" placeholder="Taylor Morgan"></div><div><label class="label">Email</label><input class="field" name="email" type="email" value="${esc(l?.email||'')}" placeholder="name@example.com"></div><div><label class="label">Phone</label><input class="field" name="phone" value="${esc(l?.phone||'')}" placeholder="Phone number"></div><div><label class="label">Service</label><input class="field" name="service" value="${esc(l?.service||'Standard cleaning')}" placeholder="Deep cleaning"></div><div><label class="label">Status</label><select class="field" name="status">${['New','Quoted','Follow-up','Won','Lost'].map(s=>`<option ${l?.status===s?'selected':''}>${s}</option>`).join('')}</select></div><div><label class="label">Estimated value ($)</label><input class="field" name="value" type="number" min="0" step="1" value="${esc(l?.value??0)}"></div><div><label class="label">Next follow-up</label><input class="field" name="followup" type="date" value="${esc(l?.followup||'')}"></div><div><label class="label">Notes</label><input class="field" name="notes" value="${esc(l?.notes||'')}" placeholder="Customer needs..."></div><div style="grid-column:1/-1"><label class="label">Customer message</label><textarea class="field textarea" name="message">${esc(l?.message||'')}</textarea></div></div><div class="modal-actions"><button type="button" class="outline" id="cancel-modal">Cancel</button>${isEdit?'<button type="button" class="danger" id="delete-modal">Delete</button>':''}<button class="primary" type="submit">Save lead</button></div></form></section></div>`;document.getElementById('cancel-modal').onclick=closeModal;document.getElementById('modal-backdrop').addEventListener('click',e=>{if(e.target.id==='modal-backdrop')closeModal()});if(isEdit)document.getElementById('delete-modal').onclick=()=>deleteLead(l.id);document.getElementById('lead-form').onsubmit=e=>{e.preventDefault();const f=new FormData(e.currentTarget);const data={id:l?.id||('L-'+Date.now()),name:String(f.get('name')).trim(),email:String(f.get('email')).trim(),phone:String(f.get('phone')).trim(),service:String(f.get('service')).trim()||'Cleaning service',status:String(f.get('status')),value:Number(f.get('value'))||0,followup:String(f.get('followup')),notes:String(f.get('notes')).trim(),message:String(f.get('message')).trim(),draft:l?.draft||''};if(isEdit){leads=leads.map(x=>x.id===l.id?data:x)}else{leads.unshift(data)}selectedId=data.id;persist();closeModal();renderAll();toast(isEdit?'Lead updated':'Lead added')}}
+
+function renderReplySelect() {
+  const sel = document.getElementById('reply-lead');
+  if (!sel) return;
+
+  const inquiry = document.getElementById('inquiry');
+  const output = document.getElementById('reply-output');
+  const previous = sel.value;
+
+  sel.innerHTML = '<option value="">Choose a lead (optional)</option>';
+
+  leads.forEach(l => {
+    const option = document.createElement('option');
+    option.value = String(l.id);
+    option.textContent = `${l.name} — ${l.service}`;
+    sel.appendChild(option);
+  });
+
+  const target = leads.some(l => String(l.id) === previous)
+    ? previous
+    : leads.some(l => String(l.id) === String(selectedId))
+      ? String(selectedId)
+      : '';
+
+  sel.value = target;
+
+  const lead = leads.find(l => String(l.id) === sel.value);
+
+  if (lead) {
+    if (inquiry) inquiry.value = lead.message || '';
+    if (output) output.value = lead.draft || '';
+
+  }
+}
+
+function renderAll(){
+  renderStats();
+  renderRows('lead-rows',document.getElementById('search').value,document.getElementById('filter-status').value);
+  renderRows('all-rows',document.getElementById('search-all').value,document.getElementById('filter-all').value,true);
+  renderDetail();
+  renderNextActions();
+  renderFollowups();
+  renderReplySelect();
+}
+
+function openLeadModal(l=null){
+const isEdit=!!l;document.getElementById('modal-root').innerHTML=`<div class="modal-backdrop" id="modal-backdrop"><section class="modal"><h2>${isEdit?'Edit lead':'Add a lead'}</h2><p>Keep contact information and the next step up to date.</p><form id="lead-form"><div class="modal-grid"><div><label class="label">Full name *</label><input class="field" name="name" required value="${esc(l?.name||'')}" placeholder="Taylor Morgan"></div><div><label class="label">Email</label><input class="field" name="email" type="email" value="${esc(l?.email||'')}" placeholder="name@example.com"></div><div><label class="label">Phone</label><input class="field" name="phone" value="${esc(l?.phone||'')}" placeholder="Phone number"></div><div><label class="label">Service</label><input class="field" name="service" value="${esc(l?.service||'Standard cleaning')}" placeholder="Deep cleaning"></div><div><label class="label">Status</label><select class="field" name="status">${['New','Quoted','Follow-up','Won','Lost'].map(s=>`<option ${l?.status===s?'selected':''}>${s}</option>`).join('')}</select></div><div><label class="label">Estimated value ($)</label><input class="field" name="value" type="number" min="0" step="1" value="${esc(l?.value??0)}"></div><div><label class="label">Next follow-up</label><input class="field" name="followup" type="date" value="${esc(l?.followup||'')}"></div><div><label class="label">Notes</label><input class="field" name="notes" value="${esc(l?.notes||'')}" placeholder="Customer needs..."></div><div style="grid-column:1/-1"><label class="label">Customer message</label><textarea class="field textarea" name="message">${esc(l?.message||'')}</textarea></div></div><div class="modal-actions"><button type="button" class="outline" id="cancel-modal">Cancel</button>${isEdit?'<button type="button" class="danger" id="delete-modal">Delete</button>':''}<button class="primary" type="submit">Save lead</button></div></form></section></div>`;document.getElementById('cancel-modal').onclick=closeModal;document.getElementById('modal-backdrop').addEventListener('click',e=>{if(e.target.id==='modal-backdrop')closeModal()});if(isEdit)document.getElementById('delete-modal').onclick=()=>deleteLead(l.id);document.getElementById('lead-form').onsubmit=e=>{e.preventDefault();const f=new FormData(e.currentTarget);const data={id:l?.id||('L-'+Date.now()),name:String(f.get('name')).trim(),email:String(f.get('email')).trim(),phone:String(f.get('phone')).trim(),service:String(f.get('service')).trim()||'Cleaning service',status:String(f.get('status')),value:Number(f.get('value'))||0,followup:String(f.get('followup')),notes:String(f.get('notes')).trim(),message:String(f.get('message')).trim(),draft:l?.draft||''};if(isEdit){leads=leads.map(x=>x.id===l.id?data:x)}else{leads.unshift(data)}selectedId=data.id;persist();closeModal();renderAll();toast(isEdit?'Lead updated':'Lead added')}}
 function closeModal(){document.getElementById('modal-root').innerHTML=''}
 function deleteLead(id){const l=leads.find(x=>x.id===id);if(!l)return;if(!confirm(`Delete ${l.name}? This cannot be undone.`))return;leads=leads.filter(x=>x.id!==id);if(selectedId===id)selectedId=leads[0]?.id||null;persist();closeModal();renderAll();toast('Lead deleted')}
 function csvEscape(v){return '"'+String(v??'').replace(/"/g,'""')+'"'}
