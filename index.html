@@ -96,7 +96,103 @@ document.getElementById('lead-form').onsubmit=e=>{e.preventDefault();const f=new
 function closeModal(){document.getElementById('modal-root').innerHTML=''}
 function exportCSV(){const cols=['id','name','email','phone','service','status','value','followup','notes','message','draft'];const lines=[cols.join(','),...leads.map(l=>cols.map(k=>'"'+String(l[k]??'').replace(/"/g,'""')+'"').join(','))].join('\r\n');downloadBlob(lines,'replypilot-leads.csv','text/csv;charset=utf-8;');toast('CSV export prepared')}
 function downloadBlob(text,name,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
-function makeReply(){const l=leads.find(x=>x.id===document.getElementById('reply-lead').value),msg=document.getElementById('inquiry').value.trim()||(l?.message||'');if(!msg){toast('Add the customer message first');return}const business=profile.name||'our team',city=profile.city?` in ${profile.city}`:'',tone=document.getElementById('tone').value;const greeting=tone==='concise'?'Hi':tone==='warm'?'Hi there':'Hi';const opening=tone==='concise'?'Thanks for reaching out.':tone==='warm'?'Thanks so much for reaching out — we’d be happy to help.':'Thanks for contacting us! We’d be happy to help.';const service=l?.service||'cleaning service';let body=`${greeting}${l?.name?' '+l.name.split(' ')[0]:''},\n\n${opening} We can help with your ${service.toLowerCase()} request${city}. To make sure we give you an accurate quote and availability, could you share your preferred date and any details about the space?\n\nOnce we have those details, we can confirm the next steps. We’ll make sure you have the information you need before booking.\n\nBest,\n${business}${profile.phone?'\n'+profile.phone:''}`;if(/eco|pet/i.test(msg))body=body.replace('could you share your preferred date and any details about the space?','could you share your preferred date and any details about the space? We can also discuss product preferences and any pet-related considerations before the visit.');if(/price|pricing|cost|quote/i.test(msg))body=body.replace('confirm the next steps.','send you a quote and confirm the next steps.');document.getElementById('inquiry').value=msg;document.getElementById('reply-output').value=body;toast('Reply draft generated — review before sending')}
+
+function makeReply() {
+  const l = leads.find(
+    x => x.id === document.getElementById('reply-lead').value
+  );
+
+  const inquiry = document.getElementById('inquiry');
+  const output = document.getElementById('reply-output');
+  const msg = inquiry.value.trim() || (l?.message || '');
+
+  if (!msg) {
+    toast('Add the customer message first');
+    return;
+  }
+
+  const business = profile.name || 'Our Team';
+  const city = profile.city ? ` in ${profile.city}` : '';
+  const tone = document.getElementById('tone').value;
+  const service = l?.service || 'cleaning service';
+  const firstName = l?.name ? l.name.trim().split(/\s+/)[0] : '';
+
+  const lower = msg.toLowerCase();
+
+  const isPrice = /\b(price|pricing|cost|quote|estimate|how much|rates|fee|budget)\b/i.test(lower);
+  const isBooking = /\b(book|booking|schedule|appointment|available|availability|date|time|when can|this week|next week)\b/i.test(lower);
+  const isDeepClean = /\b(deep clean|deep cleaning|move.?out|move.?in|end.?of.?tenancy)\b/i.test(lower);
+  const isEco = /\b(eco|eco.?friendly|environment|non.?toxic|green products)\b/i.test(lower);
+  const isPet = /\b(pet|pets|dog|dogs|cat|cats|animal|animals)\b/i.test(lower);
+  const isQuestion = /\?/.test(msg);
+
+  let greeting = 'Hi';
+  if (tone === 'warm') greeting = 'Hi there';
+
+  const opening = tone === 'concise'
+    ? 'Thanks for reaching out!'
+    : tone === 'warm'
+      ? 'Thanks so much for contacting us! We’d be happy to help.'
+      : 'Thank you for contacting us. We’d be happy to assist.';
+
+  let paragraphs = [opening];
+
+  if (isPrice) {
+    paragraphs.push(
+      `For your ${service.toLowerCase()}${city}, we’d be happy to prepare an estimate. Could you share the size of the space, the type of cleaning you need, and your preferred date? This will help us provide a more accurate quote.`
+    );
+  } else if (isBooking) {
+    paragraphs.push(
+      `We’d be happy to help arrange your ${service.toLowerCase()}${city}. What date and time work best for you? We’ll check availability and confirm the details before your appointment is booked.`
+    );
+  } else if (isDeepClean) {
+    paragraphs.push(
+      `We can discuss your deep cleaning or move-related cleaning needs${city}. Could you share the size of the property, its current condition, and your preferred date so we can recommend the right service?`
+    );
+  } else if (isQuestion) {
+    paragraphs.push(
+      `We’d be glad to help with your ${service.toLowerCase()} request${city}. Could you share a little more detail about what you need? We’ll review your request and explain the available options.`
+    );
+  } else {
+    paragraphs.push(
+      `We’d be happy to help with your ${service.toLowerCase()} request${city}. Could you tell us a little more about the space and your preferred date? We’ll use those details to recommend the next steps.`
+    );
+  }
+
+  if (isEco) {
+    paragraphs.push(
+      'We can also discuss your preferences for environmentally friendly cleaning products before the visit.'
+    );
+  }
+
+  if (isPet) {
+    paragraphs.push(
+      'Please let us know about any pets in the home so we can discuss relevant cleaning and product preferences in advance.'
+    );
+  }
+
+  if (tone !== 'concise') {
+    paragraphs.push(
+      'Thank you for considering us. We look forward to hearing from you!'
+    );
+  }
+
+  const signature = [
+    'Best,',
+    business,
+    ...(profile.phone ? [profile.phone] : [])
+  ].join('\n');
+
+  const body =
+    `${greeting}${firstName ? ` ${firstName}` : ''},\n\n` +
+    `${paragraphs.join('\n\n')}\n\n${signature}`;
+
+  inquiry.value = msg;
+  output.value = body;
+
+  toast('Reply draft generated — review before sending');
+}
+
 document.querySelectorAll('[data-page]').forEach(b=>b.addEventListener('click',()=>setPage(b.dataset.page)));
 document.getElementById('add-lead-top').onclick=()=>openModal();document.getElementById('add-lead-list').onclick=()=>openModal();document.getElementById('edit-lead').onclick=()=>{const l=selected();if(l)openModal(l)};
 document.getElementById('reset-demo').onclick=()=>{if(confirm('Reset to the sample leads? This replaces the leads saved in this browser.')){leads=demoLeads.map(x=>({...x}));selectedId=leads[0].id;persist();renderAll();toast('Demo leads restored')}};
