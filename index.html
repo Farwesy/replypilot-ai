@@ -192,6 +192,39 @@ function makeReply() {
 
   toast('Reply draft generated — review before sending');
 }
+async function copyReply() {
+  const output = document.getElementById('reply-output');
+  if (!output || !output.value.trim()) {
+    toast('Generate a reply first');
+    return;
+  }
+
+  try {
+    await navigator.clipboard.writeText(output.value);
+    toast('Reply copied to clipboard!');
+  } catch (error) {
+    output.select();
+    const copied = document.execCommand('copy');
+    toast(copied ? 'Reply copied to clipboard!' : 'Copy failed — select and copy manually');
+  }
+}
+function addCopyReplyButton() {
+  const output = document.getElementById('reply-output');
+
+  if (!output || document.getElementById('copy-reply')) return;
+
+  const button = document.createElement('button');
+  button.id = 'copy-reply';
+  button.className = 'outline';
+  button.textContent = 'Copy Reply';
+  button.type = 'button';
+  button.style.marginTop = '8px';
+  button.addEventListener('click', copyReply);
+
+  output.insertAdjacentElement('afterend', button);
+}
+
+addCopyReplyButton();
 
 document.querySelectorAll('[data-page]').forEach(b=>b.addEventListener('click',()=>setPage(b.dataset.page)));
 document.getElementById('add-lead-top').onclick=()=>openModal();document.getElementById('add-lead-list').onclick=()=>openModal();document.getElementById('edit-lead').onclick=()=>{const l=selected();if(l)openModal(l)};
