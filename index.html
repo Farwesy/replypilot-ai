@@ -241,9 +241,97 @@ function setPage(page){currentPage=page;document.querySelectorAll('[id^="page-"]
 function renderStats(){document.getElementById('stat-total').textContent=leads.length;document.getElementById('stat-follow').textContent=leads.filter(l=>['New','Quoted','Follow-up'].includes(l.status)).length;document.getElementById('stat-value').textContent=money(leads.filter(l=>!['Won','Lost'].includes(l.status)).reduce((s,l)=>s+(Number(l.value)||0),0));document.getElementById('stat-won').textContent=leads.filter(l=>l.status==='Won').length}
 function matches(l,q,status){const hay=[l.name,l.email,l.service,l.notes,l.phone,l.message].join(' ').toLowerCase();return (!q||hay.includes(q.toLowerCase()))&&(status==='all'||l.status===status)}
 function renderRows(target,query='',status='all',all=false){const filtered=leads.filter(l=>matches(l,query,status));const body=document.getElementById(target);body.innerHTML=filtered.map(l=>`<tr data-select="${esc(l.id)}" class="${l.id===selectedId?'selected':''}"><td><div class="person"><div class="person-avatar">${esc(initials(l.name))}</div><div><div class="person-name">${esc(l.name)}</div><div class="person-email">${esc(l.email)}</div></div></div></td><td>${esc(l.service)}</td><td>${statusBadge(l.status)}</td><td>${money(l.value)}</td>${all?`<td>${esc(l.followup||'—')}</td><td><button class="outline" data-edit="${esc(l.id)}">Edit</button> <button class="danger" data-delete="${esc(l.id)}">Delete</button></td>`:''}</tr>`).join('');const emptyId=target==='lead-rows'?'empty-leads':'empty-all';document.getElementById(emptyId).classList.toggle('hidden',filtered.length>0)}
-function renderDetail(){const l=selected(),root=document.getElementById('lead-detail');if(!l){root.innerHTML='<div class="empty">No leads yet. Add a lead to begin.</div>';return}root.innerHTML=`<div class="selected-lead"><div class="big-avatar">${esc(initials(l.name))}</div><div><div class="lead-title">${esc(l.name)}</div><div class="lead-meta">${esc(l.email)}</div></div></div><div class="lead-fields"><div><div class="mini-label">Service</div><div class="mini-value">${esc(l.service)}</div></div><div><div class="mini-label">Estimated value</div><div class="mini-value">${money(l.value)}</div></div><div><div class="mini-label">Phone</div><div class="mini-value">${esc(l.phone||'—')}</div></div><div><div class="mini-label">Status</div><div style="margin-top:3px">${statusBadge(l.status)}</div></div><div class="full"><div class="mini-label">Next follow-up</div><div class="mini-value">${esc(l.followup||'Not scheduled')}</div></div><div class="full"><div class="mini-label">Notes</div><div class="mini-value" style="font-weight:500">${esc(l.notes||'No notes added.')}</div></div><div class="full"><div class="mini-label">Customer message</div><div class="mini-value" style="font-weight:500">${l.message?esc(l.message):'No customer message saved.'}</div></div></div><button class="primary" id="detail-edit">Edit lead</button>`;document.getElementById('detail-edit').onclick=()=>openLeadModal(l)}
-function renderNextActions(){const items=leads.filter(l=>['New','Quoted','Follow-up'].includes(l.status)).sort((a,b)=>(a.followup||'9999').localeCompare(b.followup||'9999')).slice(0,5);const root=document.getElementById('next-actions');root.innerHTML=items.length?items.map(l=>`<div class="follow-item"><div class="follow-dot ${l.status==='New'?'blue':''}"></div><div><strong>${esc(l.name)}</strong><span>${esc(l.service)} · ${esc(l.followup||'No date set')}</span></div><button class="outline" data-open="${esc(l.id)}">Open</button></div>`).join(''):'<div class="empty">No open follow-ups right now.</div>'}
-function renderFollowups(){const root=document.getElementById('followup-list');const items=leads.filter(l=>!['Won','Lost'].includes(l.status)).sort((a,b)=>(a.followup||'9999').localeCompare(b.followup||'9999'));root.innerHTML=items.length?items.map(l=>`<div class="follow-item"><div class="follow-dot ${l.status==='New'?'blue':''}"></div><div><strong>${esc(l.name)} — ${esc(l.status)}</strong><span>${esc(l.service)} · ${esc(l.followup||'No follow-up date')} · ${money(l.value)}</span><div class="sub">${esc(l.notes||'No notes')}</div></div><button class="outline" data-open="${esc(l.id)}">Open</button></div>`).join(''):'<div class="empty">No open leads.</div>'}
+function renderDetail(){
+  const l = selected();
+  const root = document.getElementById('lead-detail');
+
+  if(!l){
+    root.innerHTML = '<div class="empty">No leads yet. Add a lead to begin.</div>';
+    return;
+  }
+
+  root.innerHTML = `
+    <div class="selected-lead">
+      <div class="big-avatar">${esc(initials(l.name))}</div>
+      <div>
+        <div class="lead-title">${esc(l.name)}</div>
+        <div class="lead-meta">${esc(l.email)}</div>
+      </div>
+    </div>
+
+    <div class="lead-fields">
+      <div>
+        <div class="mini-label">Service</div>
+        <div class="mini-value">${esc(l.service)}</div>
+      </div>
+      <div>
+        <div class="mini-label">Estimated value</div>
+        <div class="mini-value">${money(l.value)}</div>
+      </div>
+      <div>
+        <div class="mini-label">Phone</div>
+        <div class="mini-value">${esc(l.phone || '—')}</div>
+      </div>
+      <div>
+        <div class="mini-label">Status</div>
+        <div style="margin-top:3px">${statusBadge(l.status)}</div>
+      </div>
+      <div class="full">
+        <div class="mini-label">Next follow-up</div>
+        <div class="mini-value">${esc(l.followup || 'Not scheduled')}</div>
+      </div>
+      <div class="full">
+        <div class="mini-label">Notes</div>
+        <div class="mini-value" style="font-weight:500">${esc(l.notes || 'No notes added.')}</div>
+      </div>
+      <div class="full">
+        <div class="mini-label">Customer's message</div>
+        <div class="mini-value" style="font-weight:500;white-space:pre-wrap">${esc(l.message || 'No customer message saved.')}</div>
+      </div>
+      <div class="full">
+        <label class="label" for="detail-draft">Your draft</label>
+        <textarea class="field textarea reply-output" id="detail-draft" placeholder="Write your reply to this customer...">${esc(l.draft || '')}</textarea>
+        <button class="primary" id="save-detail-draft" style="margin-top:10px">Save draft</button>
+      </div>
+    </div>
+
+    <button class="outline" id="detail-edit">Edit lead</button>
+  `;
+
+  document.getElementById('detail-edit').onclick = () => openLeadModal(l);
+
+  document.getElementById('save-detail-draft').onclick = () => {
+    const draft = document.getElementById('detail-draft').value;
+    const currentLead = leads.find(x => x.id === l.id);
+    if(!currentLead) return;
+
+    currentLead.draft = draft;
+    persist();
+    toast('Reply draft saved');
+  };
+}
+function renderNextActions(){
+  const items = leads
+    .filter(l => ['New', 'Quoted', 'Follow-up'].includes(l.status))
+    .sort((a, b) => (a.followup || '9999').localeCompare(b.followup || '9999'))
+    .slice(0, 5);
+
+  const root = document.getElementById('next-actions');
+
+  root.innerHTML = items.length
+    ? items.map(l => `
+        <div class="follow-item">
+          <div class="follow-dot ${l.status === 'New' ? 'blue' : ''}"></div>
+          <div>
+            <strong>${esc(l.name)}</strong>
+            <span>${esc(l.service)} · ${esc(l.followup || 'No date set')}</span>
+          </div>
+          <button class="outline" data-open="${esc(l.id)}">Open</button>
+        </div>
+      `).join('')
+    : '<div class="empty">No open follow-ups right now.</div>';
+}
+{const root=document.getElementById('followup-list');const items=leads.filter(l=>!['Won','Lost'].includes(l.status)).sort((a,b)=>(a.followup||'9999').localeCompare(b.followup||'9999'));root.innerHTML=items.length?items.map(l=>`<div class="follow-item"><div class="follow-dot ${l.status==='New'?'blue':''}"></div><div><strong>${esc(l.name)} — ${esc(l.status)}</strong><span>${esc(l.service)} · ${esc(l.followup||'No follow-up date')} · ${money(l.value)}</span><div class="sub">${esc(l.notes||'No notes')}</div></div><button class="outline" data-open="${esc(l.id)}">Open</button></div>`).join(''):'<div class="empty">No open leads.</div>'}
 function renderReplySelect(){const sel=document.getElementById('reply-lead');const previous=sel.value;sel.innerHTML='<option value="">Choose a lead (optional)</option>'+leads.map(l=>`<option value="${esc(l.id)}">${esc(l.name)} — ${esc(l.service)}</option>`).join('');sel.value=leads.some(l=>l.id===previous)?previous:(selectedId||'');if(sel.value){const l=leads.find(x=>x.id===sel.value);if(l){document.getElementById('inquiry').value=l.message||'';document.getElementById('reply-output').value=l.draft||''}}}
 function renderAll(){renderStats();renderRows('lead-rows',document.getElementById('search').value,document.getElementById('filter-status').value);renderRows('all-rows',document.getElementById('search-all').value,document.getElementById('filter-all').value,true);renderDetail();renderNextActions();renderFollowups();renderReplySelect()}
 function openLeadModal(l=null){const isEdit=!!l;document.getElementById('modal-root').innerHTML=`<div class="modal-backdrop" id="modal-backdrop"><section class="modal"><h2>${isEdit?'Edit lead':'Add a lead'}</h2><p>Keep contact information and the next step up to date.</p><form id="lead-form"><div class="modal-grid"><div><label class="label">Full name *</label><input class="field" name="name" required value="${esc(l?.name||'')}" placeholder="Taylor Morgan"></div><div><label class="label">Email</label><input class="field" name="email" type="email" value="${esc(l?.email||'')}" placeholder="name@example.com"></div><div><label class="label">Phone</label><input class="field" name="phone" value="${esc(l?.phone||'')}" placeholder="Phone number"></div><div><label class="label">Service</label><input class="field" name="service" value="${esc(l?.service||'Standard cleaning')}" placeholder="Deep cleaning"></div><div><label class="label">Status</label><select class="field" name="status">${['New','Quoted','Follow-up','Won','Lost'].map(s=>`<option ${l?.status===s?'selected':''}>${s}</option>`).join('')}</select></div><div><label class="label">Estimated value ($)</label><input class="field" name="value" type="number" min="0" step="1" value="${esc(l?.value??0)}"></div><div><label class="label">Next follow-up</label><input class="field" name="followup" type="date" value="${esc(l?.followup||'')}"></div><div><label class="label">Notes</label><input class="field" name="notes" value="${esc(l?.notes||'')}" placeholder="Customer needs..."></div><div style="grid-column:1/-1"><label class="label">Customer message</label><textarea class="field textarea" name="message">${esc(l?.message||'')}</textarea></div></div><div class="modal-actions"><button type="button" class="outline" id="cancel-modal">Cancel</button>${isEdit?'<button type="button" class="danger" id="delete-modal">Delete</button>':''}<button class="primary" type="submit">Save lead</button></div></form></section></div>`;document.getElementById('cancel-modal').onclick=closeModal;document.getElementById('modal-backdrop').addEventListener('click',e=>{if(e.target.id==='modal-backdrop')closeModal()});if(isEdit)document.getElementById('delete-modal').onclick=()=>deleteLead(l.id);document.getElementById('lead-form').onsubmit=e=>{e.preventDefault();const f=new FormData(e.currentTarget);const data={id:l?.id||('L-'+Date.now()),name:String(f.get('name')).trim(),email:String(f.get('email')).trim(),phone:String(f.get('phone')).trim(),service:String(f.get('service')).trim()||'Cleaning service',status:String(f.get('status')),value:Number(f.get('value'))||0,followup:String(f.get('followup')),notes:String(f.get('notes')).trim(),message:String(f.get('message')).trim(),draft:l?.draft||''};if(isEdit){leads=leads.map(x=>x.id===l.id?data:x)}else{leads.unshift(data)}selectedId=data.id;persist();closeModal();renderAll();toast(isEdit?'Lead updated':'Lead added')}}
