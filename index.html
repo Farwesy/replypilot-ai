@@ -308,7 +308,6 @@ document.getElementById('backup-json').onclick=()=>downloadBlob(JSON.stringify({
 document.getElementById('clear-data').onclick=()=>{if(confirm('Delete every saved lead from this browser? Download a backup first if you may need it.')){leads=[];selectedId=null;persist();renderAll();toast('Saved leads deleted')}};
 document.getElementById('import-file').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const data=JSON.parse(await f.text()),imported=Array.isArray(data)?data:data.leads;if(!Array.isArray(imported))throw Error('No leads array');if(confirm(`Import ${imported.length} leads? This replaces current leads.`)){leads=imported.map(normalizeLead);profile=data.profile||profile;selectedId=leads[0]?.id||null;persist();localStorage.setItem(PROFILE_KEY,JSON.stringify(profile));renderAll();toast('Backup imported')}}catch{toast('Could not read that JSON backup')}e.target.value=''};
 renderAll();
-```javascript
 // ReplyPilot AI theme switcher
 const themeSelect = document.getElementById("theme-select");
 
