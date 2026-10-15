@@ -340,7 +340,85 @@ function deleteLead(id){const l=leads.find(x=>x.id===id);if(!l)return;if(!confir
 function csvEscape(v){return '"'+String(v??'').replace(/"/g,'""')+'"'}
 function exportCSV(){const cols=['name','email','phone','service','status','value','followup','notes','message','draft'];const rows=[cols.join(','),...leads.map(l=>cols.map(k=>csvEscape(l[k])).join(','))];downloadBlob('\ufeff'+rows.join('\r\n'),'replypilot-leads.csv','text/csv;charset=utf-8')}
 function downloadBlob(content,name,type){const blob=new Blob([content],{type});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url)}
-function makeReply(){const l=leads.find(x=>x.id===document.getElementById('reply-lead').value);const inquiry=document.getElementById('inquiry').value.trim();if(!inquiry){toast('Paste the customer message first');return}const tone=document.getElementById('tone').value;const biz=profile.name||'our cleaning team';const city=profile.city?` in ${profile.city}`:'';let start=tone==='concise'?'Thanks for reaching out.':tone==='warm'?'Thanks so much for reaching out to us! We’re happy to help.':'Hi there, thanks for contacting us!';let middle=` We’d be glad to help with your cleaning needs${city}.`;let question=' Could you share your preferred date and the size of the home so we can confirm availability and provide an accurate estimate?';let end=tone==='concise'?' Best, '+biz: '\n\nBest regards,\n'+biz+(profile.phone?'\n'+profile.phone:'');document.getElementById('reply-output').value=start+middle+question+end;if(l){l.draft=document.getElementById('reply-output').value;l.message=inquiry;persist()}toast('Draft created — review before sending')}
+
+async function makeReply() {
+  const l = leads.find(
+    x => x.id === document.getElementById('reply-lead').value
+  );
+
+  const inquiry = document.getElementById('inquiry').value.trim();
+
+  if (!inquiry) {
+    toast('Paste the customer message first');
+    return;
+  }
+
+  const button = document.getElementById('generate-reply');
+  const output = document.getElementById('reply-output');
+  const tone = document.getElementById('tone').value;
+  const biz = profile.name || 'our cleaning team';
+  const city = profile.city ? ` in ${profile.city}` : '';
+
+  const tones = {
+    concise: 'Be concise and direct.',
+    warm: 'Be warm, friendly, and welcoming.',
+    professional: 'Be professional, clear, and polite.'
+  };
+
+  const prompt = [
+    'Write a reply to this customer message.',
+    `Business name: ${biz}${city}.`,
+    `Tone: ${tones[tone] || tones.professional}`,
+    'Do not invent prices, availability, policies, or promises.',
+    'Ask a useful follow-up question if necessary.',
+    'Return only the message to send to the customer.',
+    '',
+    'Customer message:',
+    inquiry
+  ].join('\n');
+
+  button.disabled = true;
+  button.textContent = 'Generating...';
+
+  try {
+    const response = await fetch(
+      'https://blue-frog-f940replypilot-ai-api.hantenguy.workers.dev/',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ message: prompt })
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'AI request failed');
+    }
+
+    if (!data.reply) {
+      throw new Error('The AI returned an empty reply');
+    }
+
+    output.value = data.reply;
+
+    if (l) {
+      l.draft = data.reply;
+      l.message = inquiry;
+      persist();
+    }
+
+    toast('AI reply generated — review before sending');
+  } catch (error) {
+    console.error('ReplyPilot AI error:', error);
+    toast('Could not generate reply. Check API settings and try again.');
+  } finally {
+    button.disabled = false;
+    button.textContent = 'Generate reply';
+  }
+}
 document.querySelectorAll('[data-page]').forEach(b=>b.addEventListener('click',()=>setPage(b.dataset.page)));
 document.getElementById('add-lead-top').onclick=()=>openLeadModal();document.getElementById('add-lead-list').onclick=()=>openLeadModal();document.getElementById('edit-lead').onclick=()=>{const l=selected();if(l)openLeadModal(l);else openLeadModal()};
 document.getElementById('view-all').onclick=()=>setPage('leads');
