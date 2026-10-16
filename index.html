@@ -408,79 +408,88 @@ function csvEscape(v){return '"'+String(v??'').replace(/"/g,'""')+'"'}
 function exportCSV(){const cols=['name','email','phone','service','status','value','followup','notes','message','draft'];const rows=[cols.join(','),...leads.map(l=>cols.map(k=>csvEscape(l[k])).join(','))];downloadBlob('\ufeff'+rows.join('\r\n'),'replypilot-leads.csv','text/csv;charset=utf-8')}
 function downloadBlob(content,name,type){const blob=new Blob([content],{type});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url)}
 
+
 async function makeReply() {
-  const l = leads.find(
-    x => x.id === document.getElementById('reply-lead').value
+  const leadSelect = document.getElementById('reply-lead');
+  const lead = leads.find(
+    x => String(x.id) === String(leadSelect.value)
   );
 
   const inquiry = document.getElementById('inquiry').value.trim();
+  const button = document.getElementById('generate-reply');
+  const output = document.getElementById('reply-output');
+  const tone = document.getElementById('tone').value;
+
+  const biz = profile.name || 'our cleaning team';
+  const city = profile.city ? ` in ${profile.city}` : '';
 
   if (!inquiry) {
     toast('Paste the customer message first');
     return;
   }
 
-  const button = document.getElementById('generate-reply');
-  const output = document.getElementById('reply-output');
-  const tone = document.getElementById('tone').value;
-  const biz = profile.name || 'our cleaning team';
-  const city = profile.city ? ` in ${profile.city}` : '';
-
-  const tones = {
-    concise: 'Be concise and direct.',
-    warm: 'Be warm, friendly, and welcoming.',
-    professional: 'Be professional, clear, and polite.'
-  };
-
-  const prompt = [
-    'Write a reply to this customer message.',
-    `Business name: ${biz}${city}.`,
-    `Tone: ${tones[tone] || tones.professional}`,
-    'Do not invent prices, availability, policies, or promises.',
-    'Ask a useful follow-up question if necessary.',
-    'Return only the message to send to the customer.',
-    '',
-    'Customer message:',
-    inquiry
-  ].join('\n');
-
   button.disabled = true;
-  button.textContent = 'Generating...';
+  button.textContent = 'Creating reply...';
 
   try {
-    const response = await fetch(
-      'https://blue-frog-f940replypilot-ai-api.hantenguy.workers.dev/',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ message: prompt })
-      }
-    );
+    const message = inquiry.toLowerCase();
 
-    const data = await response.json();
+    const greeting = tone === 'warm'
+      ? 'Hi there!'
+      : tone === 'concise'
+        ? 'Hello,'
+        : 'Hello,';
 
-    if (!response.ok) {
-      throw new Error(data.error || 'AI request failed');
+    const closing = tone === 'warm'
+      ? 'We look forward to hearing from you!'
+      : tone === 'concise'
+        ? 'Best regards,'
+        : 'Best regards,';
+
+    let reply;
+
+    if (
+      /complaint|unhappy|disappointed|bad service|not satisfied|problem|issue|dirty|missed/.test(message)
+    ) {
+      reply = `${greeting}\n\nThank you for letting us know. I'm sorry to hear that your experience did not meet your expectations. We'd appreciate the opportunity to understand what happened and help resolve this.\n\nCould you please share a few more details about the issue?\n\n${closing}\n${biz}`;
+    } else if (
+      /price|cost|quote|estimate|how much|pricing|rates/.test(message)
+    ) {
+      reply = `${greeting}\n\nThank you for contacting ${biz}${city}! We'd be happy to learn more about your cleaning needs and provide an accurate quote.\n\nCould you tell us a little more about the property, the type of cleaning you need, and your preferred date?\n\n${closing}\n${biz}`;
+    } else if (
+      /book|booking|appointment|availability|available|schedule|date|when can/.test(message)
+    ) {
+      reply = `${greeting}\n\nThank you for reaching out to ${biz}${city}! We'd be happy to discuss scheduling your cleaning service.\n\nWhat date and time would work best for you? We'll review your request and confirm availability.\n\n${closing}\n${biz}`;
+    } else if (
+      /cancel|reschedule|change my appointment|move my appointment/.test(message)
+    ) {
+      reply = `${greeting}\n\nThanks for letting us know. We can help with your appointment request.\n\nCould you share your current appointment date and your preferred new date or let us know if you'd like to cancel?\n\n${closing}\n${biz}`;
+    } else if (
+      /thank you|thanks|appreciate/.test(message)
+    ) {
+      reply = `${greeting}\n\nYou're very welcome! Thank you for choosing ${biz}. We appreciate your business and are happy to help whenever you need us.\n\n${closing}\n${biz}`;
+    } else {
+      reply = `${greeting}\n\nThank you for contacting ${biz}${city}! We'd be happy to help with your cleaning needs.\n\nCould you share a few more details about the service you're looking for and your preferred timing? That will help us guide you to the next step.\n\n${closing}\n${biz}`;
     }
 
-    if (!data.reply) {
-      throw new Error('The AI returned an empty reply');
+    if (tone === 'concise') {
+      reply = reply
+        .replace('Thank you for contacting', 'Thanks for contacting')
+        .replace('We would be happy', "We'd be happy");
     }
 
-    output.value = data.reply;
+    output.value = reply;
 
-    if (l) {
-      l.draft = data.reply;
-      l.message = inquiry;
+    if (lead) {
+      lead.draft = reply;
+      lead.message = inquiry;
       persist();
     }
 
-    toast('AI reply generated — review before sending');
+    toast('Reply created — review before sending');
   } catch (error) {
     console.error('ReplyPilot AI error:', error);
-    toast('Could not generate reply. Check API settings and try again.');
+    toast('Could not create reply. Please try again.');
   } finally {
     button.disabled = false;
     button.textContent = 'Generate reply';
