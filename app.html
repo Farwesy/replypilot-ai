@@ -366,29 +366,65 @@ function renderReplySelect() {
 
   }
 }
-function renderFollowups(){
+
+function renderFollowups() {
   const root = document.getElementById('followup-list');
   if (!root) return;
 
-  const items = leads
-    .filter(l => !['Won', 'Lost'].includes(l.status))
-    .sort((a, b) =>
-      (a.followup || '9999').localeCompare(b.followup || '9999')
-    );
+  const today = new Date();
+  const todayKey = [
+    today.getFullYear(),
+    String(today.getMonth() + 1).padStart(2, '0'),
+    String(today.getDate()).padStart(2, '0')
+  ].join('-');
 
-  root.innerHTML = items.length
-    ? items.map(l => `
-        <div class="follow-item">
-          <div class="follow-dot ${l.status === 'New' ? 'blue' : ''}"></div>
-          <div>
-            <strong>${esc(l.name)} — ${esc(l.status)}</strong>
-            <span>${esc(l.service)} · ${esc(l.followup || 'No follow-up date')} · ${money(l.value)}</span>
-            <div class="sub">${esc(l.notes || 'No notes')}</div>
+  const openLeads = leads.filter(
+    l => !['Won', 'Lost'].includes(l.status)
+  );
+
+  const overdue = openLeads.filter(
+    l => l.followup && l.followup < todayKey
+  );
+
+  const dueToday = openLeads.filter(
+    l => l.followup === todayKey
+  );
+
+  const upcoming = openLeads.filter(
+    l => l.followup && l.followup > todayKey
+  );
+
+  const noDate = openLeads.filter(
+    l => !l.followup
+  );
+
+  function renderGroup(title, items, type) {
+    return `
+      <div class="follow-group">
+        <h3>${title} (${items.length})</h3>
+        ${items.length ? items.map(l => `
+          <div class="follow-item">
+            <div class="follow-dot ${type === 'overdue' ? 'blue' : ''}"></div>
+            <div>
+              <strong>${esc(l.name)} — ${esc(l.status)}</strong>
+              <span>${esc(l.service || 'Cleaning service')} ·
+                ${esc(l.followup || 'No follow-up date')} ·
+                ${money(l.value)}
+              </span>
+              <div class="sub">${esc(l.notes || 'No notes')}</div>
+            </div>
+            <button class="outline" data-open="${esc(l.id)}">Open</button>
           </div>
-          <button class="outline" data-open="${esc(l.id)}">Open</button>
-        </div>
-      `).join('')
-    : '<div class="empty">No open leads.</div>';
+        `).join('') : '<div class="empty">No leads in this group.</div>'}
+      </div>
+    `;
+  }
+
+  root.innerHTML =
+    renderGroup('Overdue', overdue, 'overdue') +
+    renderGroup('Due today', dueToday, 'today') +
+    renderGroup('Upcoming', upcoming, 'upcoming') +
+    renderGroup('No date scheduled', noDate, 'none');
 }
 function renderAll(){
   renderStats();
