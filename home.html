@@ -1,0 +1,599 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="ReplyPilot helps small cleaning businesses organize leads, prepare customer replies, and track follow-ups.">
+  <title>ReplyPilot AI — Customer replies, made simpler</title>
+  <style>
+    :root {
+      --bg: #f7f9fc;
+      --card: #ffffff;
+      --text: #172033;
+      --muted: #64748b;
+      --blue: #365cf5;
+      --border: #e5eaf3;
+      --navy: #101a35;
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    a { color: inherit; text-decoration: none; }
+
+    .container {
+      width: min(1120px, calc(100% - 40px));
+      margin: auto;
+    }
+
+    header {
+      background: rgba(255,255,255,.92);
+      border-bottom: 1px solid var(--border);
+    }
+
+    nav {
+      min-height: 76px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      font-size: 21px;
+      letter-spacing: -.6px;
+    }
+
+    .logo {
+      display: grid;
+      place-items: center;
+      width: 38px;
+      height: 38px;
+      color: white;
+      background: var(--blue);
+      border-radius: 12px;
+      font-size: 22px;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 25px;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .button {
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      background: var(--blue);
+      color: white;
+      border: 0;
+      border-radius: 10px;
+      padding: 13px 20px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform .2s, background .2s;
+    }
+
+    .button:hover {
+      background: #2448dc;
+      transform: translateY(-1px);
+    }
+
+    .button-light {
+      background: white;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .button-light:hover { background: #f1f5f9; }
+
+    .hero {
+      padding: 90px 0 75px;
+      background:
+        radial-gradient(ellipse at 85% 10%, #dce5ff 0, transparent 35%),
+        radial-gradient(ellipse at 10% 80%, #e8eaff 0, transparent 35%),
+        var(--bg);
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1.05fr .95fr;
+      align-items: center;
+      gap: 55px;
+    }
+
+    .eyebrow {
+      display: inline-block;
+      color: #294bd0;
+      background: #e7edff;
+      border: 1px solid #d6e0ff;
+      border-radius: 30px;
+      padding: 7px 12px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 1px;
+    }
+
+    h1 {
+      font-size: clamp(38px, 5vw, 60px);
+      letter-spacing: -2.8px;
+      line-height: 1.08;
+      margin: 22px 0;
+    }
+
+    h1 span { color: var(--blue); }
+
+    .hero-copy {
+      max-width: 530px;
+      font-size: 17px;
+      color: var(--muted);
+      margin-bottom: 28px;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .fine-print {
+      margin-top: 16px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .preview {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 22px;
+      box-shadow: 0 24px 70px rgba(33,55,110,.12);
+    }
+
+    .preview-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 18px;
+      border-bottom: 1px solid var(--border);
+      font-weight: 800;
+    }
+
+    .status {
+      font-size: 11px;
+      color: #18794e;
+      background: #e7f8ef;
+      padding: 5px 9px;
+      border-radius: 20px;
+    }
+
+    .preview-label {
+      margin: 20px 0 8px;
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--muted);
+      letter-spacing: .7px;
+    }
+
+    .message {
+      padding: 14px;
+      border-radius: 12px;
+      background: #f2f5fa;
+      font-size: 13px;
+      color: #39465c;
+    }
+
+    .reply {
+      padding: 15px;
+      border: 1px solid #dce4ff;
+      border-radius: 12px;
+      background: #f6f8ff;
+      font-size: 13px;
+    }
+
+    .reply strong { color: var(--blue); }
+
+    section { padding: 75px 0; }
+
+    .section-heading {
+      max-width: 650px;
+      margin: 0 auto 42px;
+      text-align: center;
+    }
+
+    .section-heading h2 {
+      font-size: clamp(28px, 4vw, 40px);
+      letter-spacing: -1.4px;
+      line-height: 1.2;
+      margin: 12px 0;
+    }
+
+    .section-heading p {
+      color: var(--muted);
+      margin: 0;
+    }
+
+    .features {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+
+    .feature {
+      padding: 25px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      border-radius: 16px;
+    }
+
+    .feature-icon {
+      width: 46px;
+      height: 46px;
+      display: grid;
+      place-items: center;
+      border-radius: 13px;
+      background: #edf1ff;
+      font-size: 22px;
+    }
+
+    .feature h3 { margin: 17px 0 8px; }
+
+    .feature p {
+      color: var(--muted);
+      font-size: 14px;
+      margin: 0;
+    }
+
+    .how {
+      background: #101a35;
+      color: white;
+    }
+
+    .how .section-heading p { color: #bdc8e0; }
+
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+
+    .step {
+      border: 1px solid #34415f;
+      background: #192542;
+      border-radius: 16px;
+      padding: 25px;
+    }
+
+    .step-number {
+      color: #aebdff;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .step p {
+      color: #bdc8e0;
+      font-size: 14px;
+    }
+
+    .pricing {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 350px));
+      justify-content: center;
+      gap: 22px;
+    }
+
+    .plan {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 28px;
+    }
+
+    .plan.featured {
+      border: 2px solid var(--blue);
+      box-shadow: 0 14px 40px rgba(54,92,245,.10);
+    }
+
+    .plan-tag {
+      color: var(--blue);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .7px;
+    }
+
+    .plan h3 { font-size: 21px; margin-bottom: 4px; }
+
+    .price {
+      font-size: 40px;
+      font-weight: 850;
+      letter-spacing: -1.5px;
+      margin: 15px 0 0;
+    }
+
+    .price small {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--muted);
+      letter-spacing: 0;
+    }
+
+    .plan-description {
+      color: var(--muted);
+      font-size: 13px;
+      min-height: 42px;
+    }
+
+    .plan ul {
+      list-style: none;
+      padding: 0;
+      margin: 22px 0;
+    }
+
+    .plan li {
+      padding: 8px 0;
+      font-size: 14px;
+    }
+
+    .plan li::before {
+      content: "✓";
+      color: #16865a;
+      font-weight: 900;
+      margin-right: 10px;
+    }
+
+    .plan .button { width: 100%; }
+
+    .pricing-note {
+      max-width: 650px;
+      margin: 25px auto 0;
+      color: var(--muted);
+      font-size: 12px;
+      text-align: center;
+    }
+
+    .cta {
+      padding: 65px 0;
+      background: #eaf0ff;
+      text-align: center;
+    }
+
+    .cta h2 {
+      font-size: clamp(28px, 4vw, 42px);
+      letter-spacing: -1.5px;
+      margin: 0 0 12px;
+    }
+
+    .cta p {
+      color: var(--muted);
+      margin: 0 0 24px;
+    }
+
+    footer {
+      background: white;
+      border-top: 1px solid var(--border);
+      padding: 25px 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .footer-inner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+
+    @media (max-width: 800px) {
+      .hero { padding: 60px 0; }
+      .hero-grid { grid-template-columns: 1fr; gap: 35px; }
+      .features, .steps { grid-template-columns: 1fr; }
+      .nav-links a:not(.button) { display: none; }
+      h1 { letter-spacing: -1.8px; }
+    }
+
+    @media (max-width: 500px) {
+      .container { width: min(100% - 28px, 1120px); }
+      .pricing { grid-template-columns: 1fr; }
+      .hero-actions .button { width: 100%; }
+      .preview { padding: 16px; }
+      section { padding: 55px 0; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <nav>
+        <a class="brand" href="home.html" aria-label="ReplyPilot home">
+          <span class="logo">↗</span>
+          ReplyPilot <span style="color:#365cf5">AI</span>
+        </a>
+        <div class="nav-links">
+          <a href="#features">Features</a>
+          <a href="#how">How it works</a>
+          <a href="#pricing">Pricing</a>
+          <a class="button" href="./">Open app →</a>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="container hero-grid">
+        <div>
+          <span class="eyebrow">BUILT FOR SMALL CLEANING BUSINESSES</span>
+          <h1>Customer replies, <span>made simpler.</span></h1>
+          <p class="hero-copy">
+            Keep track of customer inquiries, prepare professional replies,
+            and organize follow-ups — all in one simple workspace.
+          </p>
+          <div class="hero-actions">
+            <a class="button" href="./">Open ReplyPilot →</a>
+            <a class="button button-light" href="#features">Explore features</a>
+          </div>
+          <p class="fine-print">Simple tools for organizing leads and customer communication.</p>
+        </div>
+
+        <div class="preview">
+          <div class="preview-top">
+            <span>ReplyPilot Workspace</span>
+            <span class="status">Example preview</span>
+          </div>
+          <div class="preview-label">CUSTOMER INQUIRY</div>
+          <div class="message">
+            Hi! I'm looking for a deep cleaning for a 3-bedroom home.
+            Could you tell me about your services?
+          </div>
+          <div class="preview-label">SUGGESTED REPLY</div>
+          <div class="reply">
+            <strong>Hello!</strong><br><br>
+            Thank you for reaching out! We'd be happy to learn more
+            about your cleaning needs and help you find the right service.
+            Could you share your preferred date and any specific areas
+            you'd like us to focus on?<br><br>
+            Best regards,<br>Your cleaning team
+          </div>
+          <p class="fine-print">Illustrative example. Review each reply before sending.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="features">
+      <div class="container">
+        <div class="section-heading">
+          <span class="eyebrow">LESS ADMIN, MORE CLARITY</span>
+          <h2>Stay on top of every inquiry.</h2>
+          <p>Practical tools to help you keep customer communication organized.</p>
+        </div>
+        <div class="features">
+          <article class="feature">
+            <div class="feature-icon">✉</div>
+            <h3>Reply Writer</h3>
+            <p>Prepare customer replies using simple templates for common cleaning-service inquiries.</p>
+          </article>
+          <article class="feature">
+            <div class="feature-icon">▤</div>
+            <h3>Lead Management</h3>
+            <p>Keep customer details, inquiry notes, and draft replies together in one place.</p>
+          </article>
+          <article class="feature">
+            <div class="feature-icon">◷</div>
+            <h3>Follow-up Tracking</h3>
+            <p>Track next actions and follow-ups so customer requests are easier to manage.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="how" id="how">
+      <div class="container">
+        <div class="section-heading">
+          <span class="eyebrow">HOW IT WORKS</span>
+          <h2>A simpler customer workflow.</h2>
+          <p>Get organized in three straightforward steps.</p>
+        </div>
+        <div class="steps">
+          <article class="step">
+            <div class="step-number">STEP 01</div>
+            <h3>Add an inquiry</h3>
+            <p>Record the customer and the details of their cleaning request.</p>
+          </article>
+          <article class="step">
+            <div class="step-number">STEP 02</div>
+            <h3>Prepare a reply</h3>
+            <p>Use a reply template and adjust the wording to fit the customer.</p>
+          </article>
+          <article class="step">
+            <div class="step-number">STEP 03</div>
+            <h3>Track the next step</h3>
+            <p>Save the draft and keep notes about follow-ups and lead status.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="pricing">
+      <div class="container">
+        <div class="section-heading">
+          <span class="eyebrow">SIMPLE PRICING</span>
+          <h2>Start simple. Grow when you're ready.</h2>
+          <p>Explore the product before committing to a paid plan.</p>
+        </div>
+        <div class="pricing">
+          <article class="plan">
+            <span class="plan-tag">GET STARTED</span>
+            <h3>Free</h3>
+            <div class="price">$0 <small>/ forever</small></div>
+            <p class="plan-description">Try the core workflow at no cost.</p>
+            <ul>
+              <li>Lead management</li>
+              <li>Template-based reply writer</li>
+              <li>Follow-up tracking</li>
+              <li>Data export and backup</li>
+            </ul>
+            <a class="button button-light" href="./">Open free app</a>
+          </article>
+
+          <article class="plan featured">
+            <span class="plan-tag">FUTURE PLAN</span>
+            <h3>Pro</h3>
+            <div class="price">$9 <small>/ month, planned</small></div>
+            <p class="plan-description">A proposed plan for growing cleaning businesses.</p>
+            <ul>
+              <li>Everything in Free</li>
+              <li>More reply templates</li>
+              <li>Additional workflow tools</li>
+              <li>Planned productivity features</li>
+            </ul>
+            <a class="button" href="mailto:hello@replypilot.ai?subject=ReplyPilot%20Pro%20interest">Register interest</a>
+          </article>
+        </div>
+        <p class="pricing-note">
+          Pro is a proposed future plan, not currently available for purchase.
+          No payments are collected on this page. Features and pricing may change.
+        </p>
+      </div>
+    </section>
+
+    <section class="cta">
+      <div class="container">
+        <h2>Bring more clarity to your workflow.</h2>
+        <p>Start organizing customer inquiries with ReplyPilot.</p>
+        <a class="button" href="./">Open ReplyPilot →</a>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container footer-inner">
+      <a class="brand" href="home.html">
+        <span class="logo">↗</span> ReplyPilot AI
+      </a>
+      <span>Simple tools for customer communication.</span>
+      <span>© 2026 ReplyPilot AI</span>
+    </div>
+  </footer>
+</body>
+</html>
