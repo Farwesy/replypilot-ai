@@ -427,7 +427,13 @@ function renderFollowups() {
     renderGroup('Upcoming', upcoming, 'upcoming') +
     renderGroup('No date scheduled', noDate, 'none');
 }
-function renderAll(){
+document.getElementById('followup-list').addEventListener('click', function(e) {
+  const button = e.target.closest('[data-followup]');
+  if (!button) return;
+
+  generateFollowup(button.dataset.followup);
+});
+  function renderAll(){
   renderStats();
   renderRows('lead-rows',document.getElementById('search').value,document.getElementById('filter-status').value);
   renderRows('all-rows',document.getElementById('search-all').value,document.getElementById('filter-all').value,true);
