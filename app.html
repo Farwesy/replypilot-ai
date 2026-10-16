@@ -414,6 +414,7 @@ function renderFollowups() {
               <div class="sub">${esc(l.notes || 'No notes')}</div>
             </div>
             <button class="outline" data-open="${esc(l.id)}">Open</button>
+<button class="outline" data-followup="${esc(l.id)}">Generate follow-up</button>
           </div>
         `).join('') : '<div class="empty">No leads in this group.</div>'}
       </div>
