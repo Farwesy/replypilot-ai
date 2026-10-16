@@ -531,6 +531,42 @@ async function makeReply() {
     button.textContent = 'Generate reply';
   }
 }
+
+function generateFollowup(leadId) {
+  const lead = leads.find(
+    l => String(l.id) === String(leadId)
+  );
+
+  if (!lead) {
+    toast('Select a lead first');
+    return;
+  }
+
+  const name = (lead.name || '').trim().split(/\s+/)[0] || 'there';
+  const service = lead.service || 'cleaning service';
+  const biz = profile.name || 'our cleaning team';
+
+  const message =
+    `Hi ${name},\n\n` +
+    `I wanted to follow up on your interest in our ${service}. ` +
+    `If you're still looking for help, we'd be happy to answer any questions ` +
+    `or discuss the next steps. No pressure at all!\n\n` +
+    `Would you like to continue the conversation?\n\n` +
+    `Best regards,\n${biz}`;
+
+  const output = document.getElementById('reply-output');
+  const inquiry = document.getElementById('inquiry');
+
+  if (output) output.value = message;
+  if (inquiry) {
+    inquiry.value = `Follow-up for ${lead.name}: ${service}`;
+  }
+
+  lead.draft = message;
+  persist();
+
+  toast('Follow-up draft created — review before sending');
+}  
 document.querySelectorAll('[data-page]').forEach(b=>b.addEventListener('click',()=>setPage(b.dataset.page)));
 document.getElementById('add-lead-top').onclick=()=>openLeadModal();document.getElementById('add-lead-list').onclick=()=>openLeadModal();document.getElementById('edit-lead').onclick=()=>{const l=selected();if(l)openLeadModal(l);else openLeadModal()};
 document.getElementById('view-all').onclick=()=>setPage('leads');
