@@ -366,7 +366,30 @@ function renderReplySelect() {
 
   }
 }
+function renderFollowups(){
+  const root = document.getElementById('followup-list');
+  if (!root) return;
 
+  const items = leads
+    .filter(l => !['Won', 'Lost'].includes(l.status))
+    .sort((a, b) =>
+      (a.followup || '9999').localeCompare(b.followup || '9999')
+    );
+
+  root.innerHTML = items.length
+    ? items.map(l => `
+        <div class="follow-item">
+          <div class="follow-dot ${l.status === 'New' ? 'blue' : ''}"></div>
+          <div>
+            <strong>${esc(l.name)} — ${esc(l.status)}</strong>
+            <span>${esc(l.service)} · ${esc(l.followup || 'No follow-up date')} · ${money(l.value)}</span>
+            <div class="sub">${esc(l.notes || 'No notes')}</div>
+          </div>
+          <button class="outline" data-open="${esc(l.id)}">Open</button>
+        </div>
+      `).join('')
+    : '<div class="empty">No open leads.</div>';
+}
 function renderAll(){
   renderStats();
   renderRows('lead-rows',document.getElementById('search').value,document.getElementById('filter-status').value);
