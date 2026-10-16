@@ -533,15 +533,45 @@ async function makeReply() {
   }
 }
 
+
 function generateFollowup(leadId) {
   const lead = leads.find(
     l => String(l.id) === String(leadId)
   );
 
   if (!lead) {
-    toast('Select a lead first');
+    toast('Lead not found');
     return;
   }
+
+  const name = (lead.name || '').trim().split(/\s+/)[0] || 'there';
+  const service = lead.service || 'cleaning service';
+  const biz = profile.name || 'our cleaning team';
+  const notes = (lead.notes || '').trim();
+
+  const message =
+    `Hi ${name},\n\n` +
+    `I wanted to follow up on your interest in our ${service}. ` +
+    `If you're still looking for help, we'd be happy to answer any questions ` +
+    `or discuss the next steps. No pressure at all!` +
+    (notes ? `\n\nI also wanted to keep in mind: ${notes}` : '') +
+    `\n\nWould you like to continue the conversation?\n\n` +
+    `Best regards,\n${biz}`;
+
+  const output = document.getElementById('reply-output');
+  const inquiry = document.getElementById('inquiry');
+  const leadSelect = document.getElementById('reply-lead');
+
+  if (leadSelect) leadSelect.value = String(lead.id);
+  if (inquiry) inquiry.value = `Follow-up for ${lead.name}: ${service}`;
+  if (output) output.value = message;
+
+  lead.draft = message;
+  persist();
+
+  setPage('replies');
+  toast('Follow-up draft created — review before sending');
+}
 
   const name = (lead.name || '').trim().split(/\s+/)[0] || 'there';
   const service = lead.service || 'cleaning service';
